@@ -1,5 +1,3 @@
-const personModel = require("./person.model");
+const personModel = require('./person.model')
 
-module.exports = {
-    Person: personModel,
-}
+module.exports = { Person: personModel }
