@@ -1,2 +1,3 @@
 node_modules
 ./part3/node_modules
+./part3/.env

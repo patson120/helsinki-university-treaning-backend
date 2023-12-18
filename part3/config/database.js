@@ -1,12 +1,13 @@
 // Load environment variables
 require('dotenv').config({ path: './.env' })
 const mongoose = require('mongoose')
+const logger = require('../utils/logger')
 mongoose.set('strictQuery', true)
 if (!process.env.MONGODB_URI) {
-  console.log('Please provide the URI of your Mongo database.')
+  logger.error('Please provide the URI of your Mongo database.')
   process.exit(1)
 } else {
   mongoose.connect(process.env.MONGODB_URI, {})
-    .then(() => console.log('Connected to MongoDB...'))
-    .catch((error) => console.error(error))
+    .then(() => logger.info('Connected to MongoDB...'))
+    .catch((error) => logger.error(error.message))
 }

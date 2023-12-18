@@ -4,8 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon --inspect server.js",
+    "start": "node index.js",
+    "dev": "nodemon --inspect index.js",
     "lint": "eslint ."
   },
   "author": "patson120",
