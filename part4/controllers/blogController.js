@@ -1,11 +1,11 @@
 
 const models = require('../models')
-
 const logger = require('../utils/logger')
+const jwt = require('jsonwebtoken')
 
 module.exports = {
     findAllBlogs: async (request, response, next) => {
-        let blogs = await models.Blog.find({});
+        let blogs = await models.Blog.find({}).populate("user", { username: 1, name: 1 });
         return response.status(200).json(blogs);
     },
 
@@ -19,14 +19,27 @@ module.exports = {
     },
 
     findOneAndDelete: async (request, response, next) => {
-        let blog = await models.Blog.findByIdAndDelete(request.params.id)
-        logger.info(blog.title)
-        return response.status(204).end()
+
+        // get user from request object
+        const user = request.user
+
+        const blog = await models.Blog.findById(request.params.id)
+
+        if (blog.user.toString() === user.id.toString()) {
+            await models.Blog.findByIdAndRemove(blog.id)
+            logger.info(blog.title)
+            return response.status(204).end()
+        }
+        return response.status(403).json({ error: "User not authorized to delete this blog" })
+
 
     },
 
     createOrUpdate: async (request, response, next) => {
         const body = request.body
+
+        // get user from request object
+        const user = request.user
 
         // Crete a new blog
         const blog = new models.Blog({
@@ -35,9 +48,12 @@ module.exports = {
             author: body.author,
             url: body.url,
             likes: Number(body.likes),
+            user: user.id
         })
 
         let newBlog = await blog.save()
+        user.blogs = user.blogs.concat(newBlog._id)
+        await user.save()
         return response.status(201).json(newBlog);
     },
 
@@ -50,8 +66,10 @@ module.exports = {
         )
         return response.status(200).json(updatedBlog)
     },
+
+
     deleteOne: async (request, response, next) => {
         await models.Blog.findByIdAndRemove(request.params.id)
         return response.status(204).send();
-    }
+    },
 }

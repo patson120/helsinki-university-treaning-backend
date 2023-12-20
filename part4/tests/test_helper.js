@@ -18,23 +18,24 @@ const initialBlogs = [
 ]
 
 const nonExistingId = async () => {
-  const blog = new models.Blog({ 
+  const blog = new models.Blog({
     title: 'willremovethissoon',
     author: 'John',
     url: 'http://',
     likes: 1,
-})
+  })
   await blog.save()
   await blog.deleteOne()
 
   return blog._id.toString()
 }
 
-const notesInDb = async () => {
+const blogsInDb = async () => {
   const blogs = await models.Blog.find({})
   return blogs.map(blog => blog.toJSON())
 }
 
+
 module.exports = {
-  initialBlogs, nonExistingId, notesInDb
+  initialBlogs, nonExistingId, blogsInDb
 }

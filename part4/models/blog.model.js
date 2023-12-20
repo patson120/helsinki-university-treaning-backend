@@ -18,9 +18,12 @@ const blogModel = new mongoose.Schema({
     required: true,
   },
   likes: Number,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 
 }, { timestamps: true })
-
 
 blogModel.set('toJSON', {
   transform: (document, returnedObject) => {
@@ -28,6 +31,6 @@ blogModel.set('toJSON', {
     delete returnedObject._id
     delete returnedObject.__v
   }
-})
+});
 
-module.exports = mongoose.model('Blog', blogModel)
+module.exports = mongoose.model('Blog', blogModel);

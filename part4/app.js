@@ -16,4 +16,30 @@ const morgan = require('morgan')
 
 app.use(morgan(middlewares.requestLogger))
 
+
+// Blog controller
+const blogRouter = require('./routes/blogRouter')
+
+// user controller
+const usersRouter = require('./routes/userRouter')
+
+// login controller
+const loginRouter = require('./routes/loginRouter')
+
+
+
+// blog router
+app.use('/api/blogs', middlewares.tokenExtractor, middlewares.userExtractor, blogRouter)
+
+// blog router
+app.use('/api/users', usersRouter)
+
+// login router
+app.use('/api/login', loginRouter)
+
+// Error middleware
+app.use(middlewares.unknownEndpoint)
+app.use(middlewares.errorHandler)
+
+
 module.exports = app
