@@ -14,6 +14,13 @@ app.use(express.json())
 
 const morgan = require('morgan')
 
+
+if (process.env.NODE_ENV === 'test') {
+  const testingRouter = require('./routes/testingRouter')
+  app.use('/api/testing', testingRouter)
+}
+
+
 app.use(morgan(middlewares.requestLogger))
 
 

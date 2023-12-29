@@ -1,14 +1,12 @@
 
 const models = require('../models')
 const logger = require('../utils/logger')
-const jwt = require('jsonwebtoken')
 
 module.exports = {
     findAllBlogs: async (request, response, next) => {
         let blogs = await models.Blog.find({}).populate("user", { username: 1, name: 1 });
         return response.status(200).json(blogs);
     },
-
     findOneBlog: async (request, response, next) => {
         let blog = await models.Blog.findById(request.params.id)
         if (blog) {
@@ -22,17 +20,13 @@ module.exports = {
 
         // get user from request object
         const user = request.user
-
         const blog = await models.Blog.findById(request.params.id)
-
         if (blog.user.toString() === user.id.toString()) {
             await models.Blog.findByIdAndRemove(blog.id)
             logger.info(blog.title)
             return response.status(204).end()
         }
         return response.status(403).json({ error: "User not authorized to delete this blog" })
-
-
     },
 
     createOrUpdate: async (request, response, next) => {
@@ -40,16 +34,18 @@ module.exports = {
 
         // get user from request object
         const user = request.user
-
         // Crete a new blog
-        const blog = new models.Blog({
-            id: body.id.toString(),
+        const blog = new models.Blog({            
             title: body.title,
             author: body.author,
             url: body.url,
             likes: Number(body.likes),
-            user: user.id
+            user: request.user.id.toString()
         })
+
+        if (body.id){
+            blog.id = `${body.id}`
+        }
 
         let newBlog = await blog.save()
         user.blogs = user.blogs.concat(newBlog._id)
@@ -66,7 +62,6 @@ module.exports = {
         )
         return response.status(200).json(updatedBlog)
     },
-
 
     deleteOne: async (request, response, next) => {
         await models.Blog.findByIdAndRemove(request.params.id)
