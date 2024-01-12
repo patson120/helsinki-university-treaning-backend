@@ -8,7 +8,7 @@ module.exports = {
         return response.status(200).json(blogs);
     },
     findOneBlog: async (request, response, next) => {
-        let blog = await models.Blog.findById(request.params.id)
+        let blog = await models.Blog.findById(request.params.id).populate("user", { username: 1, name: 1 })
         if (blog) {
             return response.status(200).json(blog)
         } else {
@@ -58,6 +58,16 @@ module.exports = {
         let updatedBlog = await models.Blog.findByIdAndUpdate(
             request.params.id,
             { title, author, url, likes },
+            { new: true, runValidators: true, context: 'query' }
+        )
+        return response.status(200).json(updatedBlog)
+    },
+
+    addComment: async (request, response, next) => {
+        const { title, author, url, likes, comments } = request.body
+        let updatedBlog = await models.Blog.findByIdAndUpdate(
+            request.params.id,
+            { title, author, url, likes, comments },
             { new: true, runValidators: true, context: 'query' }
         )
         return response.status(200).json(updatedBlog)

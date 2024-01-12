@@ -45,7 +45,7 @@ module.exports = {
     },
 
     findOneUser: async (request, response, next) => {
-        let user = await models.User.findById(request.params.id)
+        let user = await models.User.findById(request.params.id).populate('blogs', { url: 1, title: 1, author: 1})
         if (user) {
             return response.status(200).json(user)
         } else {
