@@ -4,6 +4,9 @@ const { startStandaloneServer } = require('@apollo/server/standalone')
 const { v1: uuid } = require('uuid')
 const { GraphQLError } = require('graphql')
 
+// Load environment variables
+require('dotenv').config({ path: '.env' })
+
 let authors = [
   {
     name: 'Robert Martin',
@@ -205,7 +208,7 @@ const server = new ApolloServer({
 })
 
 startStandaloneServer(server, {
-  listen: { port: 4000 },
+  listen: { port: process.env.PORT },
 }).then(({ url }) => {
   console.log(`Server ready at ${url}`)
 })
