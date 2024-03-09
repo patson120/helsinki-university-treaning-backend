@@ -1,30 +1,20 @@
+// Load configuration to database
+require('./config/database')
+
+// Configuration des variables d'environnement
+const config = require('./utils/config');
+
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
-const { GraphQLError } = require('graphql')
-const { v1: uuid } = require('uuid')
 
-let persons = [
-  {
-    name: "Arto Hellas",
-    phone: "040-123543",
-    street: "Tapiolankatu 5 A",
-    city: "Espoo",
-    id: "3d594650-3436-11e9-bc57-8b80ba54c431"
-  },
-  {
-    name: "Matti Luukkainen",
-    phone: "040-432342",
-    street: "Malminkaari 10 A",
-    city: "Helsinki",
-    id: '3d599470-3436-11e9-bc57-8b80ba54c431'
-  },
-  {
-    name: "Venla Ruuska",
-    street: "Nallemäentie 22 C",
-    city: "Helsinki",
-    id: '3d599471-3436-11e9-bc57-8b80ba54c431'
-  },
-]
+
+// Load models from mongoose database
+const models = require("./models")
+
+// Errors
+const ERROR = require('./utils/errors')
+
+
 
 const typeDefs = `
     enum YesNo {
@@ -53,7 +43,7 @@ const typeDefs = `
             phone: String
             street: String!
             city: String!
-        ) : Person,
+        ) : Person
 
         editNumber(
             name: String!,
@@ -69,49 +59,52 @@ const typeDefs = `
 `
 
 const resolvers = {
-  Query: {
-    personCount: () => persons.length,
-    allPersons: (root, args ) => {
-        if (!args.phone) return persons
-        const byPhone = (person) => args.phone === 'YES' ? person.phone : !person.phone
-        return persons.filter(byPhone)
-    },
-    findPerson: (root, args) => persons.find(p => p.name === args.name)
-  },
-
-  Mutation: {
-    addPerson: (root, args) => {
-        const personFound = persons.find(p => p.name === args.name)
-        if (personFound){
-            throw new GraphQLError("Name must be unique", {
-                extensions: {
-                    code: "BAD_USER_INOUT",
-                    invalidArgs: args.name
-                }
-            })
-        }
-
-        const person = { ...args, id: uuid() }
-        persons = persons.concat(person)
-        return person
-    },
-
-    editNumber: (root, args) => {
-        const personFound = persons.find(p => p.name === args.name)
-        if (!personFound) return null
-        
-        const updatedPerson = { ...personFound, phone: args.phone }
-        persons = persons.map(p => p.name === args.name ? updatedPerson: p)
-        return updatedPerson  
-    }
-
-  },
 
   Person: {
-    address: ({city, street}) => {
-        return {
-            city, street
-        }
+    address: ({ city, street }) => {
+      return {
+        city, street
+      }
+    }
+  },
+
+  Query: {
+    personCount: async () => await models.Person.collection.countDocuments(),
+    allPersons: async (root, args) => {
+      if (!args.phone) return await models.Person.find({})
+      return await models.Person.find({ phone: { $exists: args.phone === 'YES' } })
+    },
+    findPerson: async (root, args) => await models.Person.findOne({ name: args.name })
+  },
+
+
+  Mutation: {
+    addPerson: async (root, args) => {
+
+      const personFound = await models.Person.findOne({ name: args.name })
+      if (personFound) {
+        ERROR.show("Name must be unique", "BAD_USER_INPUT", args.name, null)
+      }
+
+      try {
+        const person = new models.Person({ ...args })
+        return await person.save()
+      } catch (error) {
+        ERROR.show("Saving person failed", "BAD_USER_INPUT", args.name, error)
+      }
+    },
+
+    editNumber: async (root, args) => {
+      const personFound = await models.Person.findOne({ name: args.name })
+      if (!personFound) {
+        ERROR.show("User not found", "BAD_USER_INPUT", args.name, null)
+      }
+      try {
+        personFound.phone = args.phone
+        return await personFound.save()
+      } catch (error) {
+        ERROR.show("Saving number failed", "BAD_USER_INPUT", args.name, null)
+      }
     }
   }
 }
@@ -122,7 +115,7 @@ const server = new ApolloServer({
 })
 
 startStandaloneServer(server, {
-  listen: { port: 4000 },
+  listen: { port: config.PORT },
 }).then(({ url }) => {
   console.log(`Server ready at ${url}`)
 })
