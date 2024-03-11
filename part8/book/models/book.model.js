@@ -22,6 +22,6 @@ const bookModel = new mongoose.Schema({
   ]
 })
 
-schema.plugin(uniqueValidator)
+bookModel.plugin(uniqueValidator)
 
 module.exports = mongoose.model('Book', bookModel)
